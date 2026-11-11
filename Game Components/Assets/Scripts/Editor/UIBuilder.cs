@@ -12,12 +12,16 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// Adds two menu commands:
-///   Tools > Grappler > Build Game UI         - HUD timer, pause, controls, and victory screens in the open game scene
-///   Tools > Grappler > Build Main Menu Scene - a MainMenu scene with controls, best times, and settings screens
+/// Editor tool that builds all of the game's menus so nobody has to lay them
+/// out by hand. Tools, Grappler, Build Game UI adds the timer, the pause
+/// screen, the controls screen, and the victory screen to the open game scene.
+/// Tools, Grappler, Build Main Menu Scene makes the MainMenu scene with its
+/// controls, best times, and settings screens.
 ///
-/// Every button is wired to its script method. Run a command again to rebuild its UI.
-/// Requires TextMeshPro Essentials (Window > TextMeshPro > Import TMP Essential Resources).
+/// Every button is connected to its script method, the same as setting On
+/// Click in the Inspector. Running a command again rebuilds that UI. It needs
+/// the TextMeshPro Essentials, which come from Window, TextMeshPro, Import TMP
+/// Essential Resources.
 /// </summary>
 public static class UIBuilder
 {
@@ -27,6 +31,7 @@ public static class UIBuilder
     private static readonly Color ButtonColor = new Color(0.2f, 0.22f, 0.28f, 1f);
     private static readonly Color AccentColor = new Color(1f, 0.6f, 0.15f, 1f);
 
+    // The controls screen text, shown on both the main menu and the pause menu (UC2).
     private const string ControlsText =
         "Move: A / D or Left / Right arrows\n" +
         "Fire grappling hook: hold left mouse button\n" +
@@ -36,10 +41,9 @@ public static class UIBuilder
         "Let out rope: hold S\n" +
         "Pause: Esc";
 
-    // ----------------------------------------------------------------------
     // Game scene UI
-    // ----------------------------------------------------------------------
 
+    /// <summary>Builds the in-game UI. Runs from Tools, Grappler, Build Game UI.</summary>
     [MenuItem("Tools/Grappler/Build Game UI")]
     public static void BuildGameUI()
     {
@@ -58,11 +62,11 @@ public static class UIBuilder
 
         CreateBrightnessOverlay(root);
 
-        // HUD timer
+        // The timer at the top of the screen
         CompletionTimer timer = Object.FindAnyObjectByType<CompletionTimer>();
         TMP_Text timerLabel = MakeLabel(root, "Timer", "0:00.00", 48, new Vector2(0, -60), new Vector2(400, 80));
         RectTransform timerRect = timerLabel.rectTransform;
-        timerRect.anchorMin = timerRect.anchorMax = new Vector2(0.5f, 1f); // Top center
+        timerRect.anchorMin = timerRect.anchorMax = new Vector2(0.5f, 1f); // Pinned to the top center
         timerRect.anchoredPosition = new Vector2(0, -60);
         TimerDisplay timerDisplay = timerLabel.gameObject.AddComponent<TimerDisplay>();
         SetRef(timerDisplay, "timer", timer);
@@ -71,7 +75,7 @@ public static class UIBuilder
         PauseMenu pauseMenu = canvas.gameObject.AddComponent<PauseMenu>();
         VictoryScreen victory = canvas.gameObject.AddComponent<VictoryScreen>();
 
-        // Pause panel
+        // The pause screen
         RectTransform pausePanel = MakePanel(root, "Pause Panel");
         MakeLabel(pausePanel, "Title", "Paused", 72, new Vector2(0, 260), new Vector2(800, 120));
         MakeButton(pausePanel, "Resume Button", "Resume", new Vector2(0, 100), pauseMenu.Resume);
@@ -79,10 +83,10 @@ public static class UIBuilder
         MakeButton(pausePanel, "Restart Button", "Restart", new Vector2(0, -100), pauseMenu.Restart);
         MakeButton(pausePanel, "Main Menu Button", "Main menu", new Vector2(0, -200), pauseMenu.MainMenu);
 
-        // Controls panel (opened from the pause panel)
+        // The controls screen, opened from the pause screen
         RectTransform controlsPanel = ControlsPanel(root, pauseMenu.HideControls);
 
-        // Victory panel
+        // The victory screen
         RectTransform victoryPanel = MakePanel(root, "Victory Panel");
         MakeLabel(victoryPanel, "Title", "You reached the top", 72, new Vector2(0, 260), new Vector2(1200, 120));
         TMP_Text timeText = MakeLabel(victoryPanel, "Time Text", "Time: 0:00.00", 56, new Vector2(0, 130), new Vector2(800, 90));
@@ -98,7 +102,7 @@ public static class UIBuilder
         SetRef(victory, "newBestBanner", newBest.gameObject);
         SetRef(manager, "victoryScreen", victory);
 
-        // Hide the panels in the editor so they don't cover the scene view.
+        // Hide the screens in the Editor so they don't cover the Scene view.
         pausePanel.gameObject.SetActive(false);
         controlsPanel.gameObject.SetActive(false);
         victoryPanel.gameObject.SetActive(false);
@@ -108,10 +112,9 @@ public static class UIBuilder
         Debug.Log("Grappler: game UI built. Press Ctrl+S to save the scene.");
     }
 
-    // ----------------------------------------------------------------------
     // Main menu scene
-    // ----------------------------------------------------------------------
 
+    /// <summary>Builds and saves the MainMenu scene and adds both scenes to the build list. Runs from Tools, Grappler, Build Main Menu Scene.</summary>
     [MenuItem("Tools/Grappler/Build Main Menu Scene")]
     public static void BuildMainMenuScene()
     {
@@ -142,7 +145,7 @@ public static class UIBuilder
         MainMenu menu = canvas.gameObject.AddComponent<MainMenu>();
         SettingsMenu settings = canvas.gameObject.AddComponent<SettingsMenu>();
 
-        // Main panel
+        // The title screen
         RectTransform mainPanel = MakePanel(root, "Main Panel");
         TMP_Text title = MakeLabel(mainPanel, "Title", "GRAPPLER", 120, new Vector2(0, 330), new Vector2(1200, 160));
         title.color = AccentColor;
@@ -153,17 +156,17 @@ public static class UIBuilder
         MakeButton(mainPanel, "Settings Button", "Settings", new Vector2(0, -210), menu.ShowSettings);
         MakeButton(mainPanel, "Quit Button", "Quit", new Vector2(0, -310), menu.QuitGame);
 
-        // Controls panel
+        // The controls screen
         RectTransform controlsPanel = ControlsPanel(root, menu.BackToMain);
 
-        // Best times panel
+        // The best times screen
         RectTransform bestPanel = MakePanel(root, "Best Times Panel");
         MakeLabel(bestPanel, "Title", "Best times", 72, new Vector2(0, 330), new Vector2(800, 120));
         TMP_Text bestList = MakeLabel(bestPanel, "Times List", "", 40, new Vector2(0, 20), new Vector2(800, 480));
         bestList.alignment = TextAlignmentOptions.Top;
         MakeButton(bestPanel, "Back Button", "Back", new Vector2(0, -330), menu.BackToMain);
 
-        // Settings panel
+        // The settings screen
         RectTransform settingsPanel = MakePanel(root, "Settings Panel");
         MakeLabel(settingsPanel, "Title", "Settings", 72, new Vector2(0, 330), new Vector2(800, 120));
         Slider music = LabeledSlider(settingsPanel, "Music", "Music volume", new Vector2(0, 160), 0f, 1f);
@@ -188,7 +191,7 @@ public static class UIBuilder
 
         EditorSceneManager.SaveScene(menuScene, MainMenuScenePath);
 
-        // Main menu first, then the game scene, so a build starts at the menu.
+        // The main menu goes first in the build list, so the built game opens on the menu.
         var scenes = new List<EditorBuildSettingsScene>
         {
             new EditorBuildSettingsScene(MainMenuScenePath, true),
@@ -202,10 +205,9 @@ public static class UIBuilder
                   "Open the MainMenu scene and press Play to try it.");
     }
 
-    // ----------------------------------------------------------------------
     // Helpers
-    // ----------------------------------------------------------------------
 
+    // The controls screen with a Back button. Both menus use this.
     private static RectTransform ControlsPanel(Transform parent, UnityAction onBack)
     {
         RectTransform panel = MakePanel(parent, "Controls Panel");
@@ -216,6 +218,7 @@ public static class UIBuilder
         return panel;
     }
 
+    // A screen-space canvas that scales with the window size.
     private static Canvas CreateCanvas(string name)
     {
         var go = new GameObject(name, typeof(RectTransform));
@@ -232,15 +235,17 @@ public static class UIBuilder
         return canvas;
     }
 
+    // Makes sure the scene has an EventSystem, since buttons don't work without one.
     private static void EnsureEventSystem()
     {
         if (Object.FindAnyObjectByType<EventSystem>() != null) return;
 
-        // The project uses the new Input System, so use its UI input module.
+        // The project only uses the new Input System, so the UI has to use its input module too.
         var go = new GameObject("EventSystem", typeof(EventSystem), typeof(InputSystemUIInputModule));
         Undo.RegisterCreatedObjectUndo(go, "Build UI");
     }
 
+    // The full-screen black image that BrightnessOverlay controls (UC13).
     private static void CreateBrightnessOverlay(Transform parent)
     {
         RectTransform overlay = Stretch(new GameObject("Brightness Overlay", typeof(RectTransform)), parent);
@@ -248,9 +253,10 @@ public static class UIBuilder
         image.color = new Color(0, 0, 0, 0);
         image.raycastTarget = false;
         overlay.gameObject.AddComponent<BrightnessOverlay>();
-        overlay.SetAsFirstSibling(); // Behind the menus, in front of the game.
+        overlay.SetAsFirstSibling(); // Drawn behind the menus but in front of the game.
     }
 
+    // A dark panel that covers the whole screen, used for each menu screen.
     private static RectTransform MakePanel(Transform parent, string name)
     {
         RectTransform rect = Stretch(new GameObject(name, typeof(RectTransform)), parent);
@@ -258,6 +264,7 @@ public static class UIBuilder
         return rect;
     }
 
+    // Makes a UI object fill its whole parent.
     private static RectTransform Stretch(GameObject go, Transform parent)
     {
         var rect = (RectTransform)go.transform;
@@ -268,6 +275,7 @@ public static class UIBuilder
         return rect;
     }
 
+    // A TextMeshPro text box at a position on the screen.
     private static TMP_Text MakeLabel(Transform parent, string name, string text, float size, Vector2 position, Vector2 boxSize)
     {
         var go = new GameObject(name, typeof(RectTransform));
@@ -285,6 +293,7 @@ public static class UIBuilder
         return tmp;
     }
 
+    // A button with a label that calls onClick when pressed.
     private static Button MakeButton(Transform parent, string name, string text, Vector2 position, UnityAction onClick)
     {
         var go = new GameObject(name, typeof(RectTransform));
@@ -301,11 +310,12 @@ public static class UIBuilder
         TMP_Text label = MakeLabel(rect, "Text", text, 40, Vector2.zero, Vector2.zero);
         Stretch(label.gameObject, rect);
 
-        // A persistent listener is saved with the scene, like wiring On Click in the Inspector.
+        // A persistent listener saves with the scene, the same as setting On Click in the Inspector.
         UnityEventTools.AddPersistentListener(button.onClick, onClick);
         return button;
     }
 
+    // A slider with a label above it, used on the settings screen.
     private static Slider LabeledSlider(Transform parent, string name, string text, Vector2 position, float min, float max)
     {
         TMP_Text label = MakeLabel(parent, name + " Label", text, 38, position + new Vector2(0, 45), new Vector2(600, 60));
@@ -318,7 +328,7 @@ public static class UIBuilder
         rect.anchoredPosition = position;
         rect.sizeDelta = new Vector2(600, 30);
 
-        // DefaultControls creates plain white images without sprites; tint them.
+        // DefaultControls makes plain white images with no sprites, so they get tinted here.
         foreach (Image img in sliderGo.GetComponentsInChildren<Image>(true))
         {
             img.color = img.name switch
@@ -336,6 +346,7 @@ public static class UIBuilder
         return slider;
     }
 
+    // Sets a private [SerializeField] field so it saves with the scene.
     private static void SetRef(Object target, string field, Object value)
     {
         var so = new SerializedObject(target);
@@ -349,6 +360,7 @@ public static class UIBuilder
         so.ApplyModifiedProperties();
     }
 
+    // Sets a private text field so it saves with the scene.
     private static void SetString(Object target, string field, string value)
     {
         var so = new SerializedObject(target);
@@ -358,6 +370,7 @@ public static class UIBuilder
         so.ApplyModifiedProperties();
     }
 
+    // Deletes the object with this name from the scene, if there is one.
     private static void DestroyIfExists(string name)
     {
         GameObject existing = GameObject.Find(name);

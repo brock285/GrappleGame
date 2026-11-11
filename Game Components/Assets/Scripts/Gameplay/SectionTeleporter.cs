@@ -2,13 +2,17 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Testing shortcut: F1-F4 move the player to the start of each tower section.
-/// Only works in the Unity Editor and development builds, never in a release build.
-/// Useful for playtesting one section at a time and for the class demo.
+/// A testing shortcut. Pressing F1, F2, F3, F4, or F5 moves the player to the
+/// start of that section of the tower, so we can test one section without
+/// climbing the whole thing first. It only works in the Unity Editor and in
+/// development builds. In a normal release build it turns itself off, so
+/// players can't skip ahead.
 /// </summary>
 public class SectionTeleporter : MonoBehaviour
 {
     [SerializeField] private Transform player;
+
+    // The start point of each section. TowerLevelBuilder fills these in.
     [SerializeField] private Vector2[] sectionStarts = new Vector2[0];
 
     private void Awake()
@@ -26,7 +30,7 @@ public class SectionTeleporter : MonoBehaviour
         Keyboard kb = Keyboard.current;
         if (kb == null || player == null) return;
 
-        Key[] keys = { Key.F1, Key.F2, Key.F3, Key.F4 };
+        Key[] keys = { Key.F1, Key.F2, Key.F3, Key.F4, Key.F5 };
         for (int i = 0; i < keys.Length && i < sectionStarts.Length; i++)
         {
             if (kb[keys[i]].wasPressedThisFrame) MoveTo(sectionStarts[i]);
@@ -35,6 +39,8 @@ public class SectionTeleporter : MonoBehaviour
 
     private void MoveTo(Vector2 point)
     {
+        // Let go of the hook and stop all movement first, or the player would
+        // get yanked back toward the old anchor or keep their old speed.
         if (player.TryGetComponent(out GrapplingHook hook)) hook.Detach();
         if (player.TryGetComponent(out Rigidbody2D rb))
         {

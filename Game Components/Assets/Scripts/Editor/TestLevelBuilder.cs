@@ -2,12 +2,14 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Adds "Tools > Grappler > Build Test Level": a small practice room with one
-/// of each obstacle, for trying out mechanics quickly. It replaces the tower
-/// level if one is in the scene. Run it again to rebuild.
+/// Editor tool behind Tools, Grappler, Build Test Level. It builds a small
+/// practice room with one of each obstacle, so we can try out a mechanic
+/// without climbing the tower. It replaces the tower level if that's in the
+/// scene, and running it again rebuilds the room.
 /// </summary>
 public static class TestLevelBuilder
 {
+    /// <summary>Builds the test room and sets up the scene. Runs from Tools, Grappler, Build Test Level.</summary>
     [MenuItem("Tools/Grappler/Build Test Level", priority = 21)]
     public static void Build()
     {

@@ -2,9 +2,10 @@ using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Darkens the screen based on the brightness setting (UC13). Put it on a
-/// full-screen black Image that's the first child of the Canvas, so it darkens
-/// the game but not the menus drawn on top of it.
+/// Darkens the screen to match the brightness setting (UC13). It goes on a
+/// black Image that covers the whole screen. The Image has to be the first
+/// child of the Canvas, so it's drawn under the menus. That way it darkens
+/// the game but the menu text stays easy to read.
 /// </summary>
 [RequireComponent(typeof(Image))]
 public class BrightnessOverlay : MonoBehaviour
@@ -14,7 +15,10 @@ public class BrightnessOverlay : MonoBehaviour
     private void Awake()
     {
         image = GetComponent<Image>();
-        image.raycastTarget = false; // Never block clicks on buttons.
+
+        // The overlay covers the whole screen, so it must never catch clicks
+        // meant for the buttons.
+        image.raycastTarget = false;
     }
 
     private void OnEnable()
@@ -25,6 +29,7 @@ public class BrightnessOverlay : MonoBehaviour
 
     private void OnDisable() => GameSettings.Changed -= Apply;
 
+    // Full brightness (1) makes the overlay clear. Lower settings make it more solid, so the game looks darker.
     private void Apply()
     {
         image.color = new Color(0f, 0f, 0f, 1f - GameSettings.Brightness);

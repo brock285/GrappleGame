@@ -4,16 +4,20 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 
 /// <summary>
-/// Adds "Tools > Grappler > Set Up Project", which:
-///   1. Adds the "Ground" and "Grappleable" layers if they're missing.
-///   2. Builds a Player in the open scene if there isn't one, with every
-///      component, the GroundCheck and Rope children, and all fields filled in.
-/// Safe to run more than once.
+/// Editor tool behind Tools, Grappler, Set Up Project. It's the first thing to
+/// run on a new copy of the project. It adds the Ground and Grappleable layers
+/// if they're missing. Then, if the open scene doesn't have a player, it builds
+/// one with every component it needs, the GroundCheck and Rope child objects,
+/// and all of the fields filled in. Running it again doesn't add anything twice.
+///
+/// It also adds Tools, Grappler, Clear Best Times, which deletes the saved
+/// times for testing.
 /// </summary>
 public static class ProjectSetup
 {
     private const string RopeMaterialPath = "Assets/Art/Rope.mat";
 
+    /// <summary>Adds the layers and builds the player. Runs from Tools, Grappler, Set Up Project.</summary>
     [MenuItem("Tools/Grappler/Set Up Project", priority = 0)]
     public static void Run()
     {
@@ -44,6 +48,7 @@ public static class ProjectSetup
                   "Next, run Tools > Grappler > Build Tower Level.");
     }
 
+    /// <summary>Deletes every saved time after asking first. Only for testing in the Editor.</summary>
     [MenuItem("Tools/Grappler/Clear Best Times", priority = 51)]
     public static void ClearBestTimes()
     {
@@ -61,7 +66,7 @@ public static class ProjectSetup
         var tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
         SerializedProperty layers = tagManager.FindProperty("layers");
 
-        // Layers 0-5 are built in; user layers start at 6.
+        // Unity uses layers 0 to 5 itself, so our layers start at 6.
         for (int i = 6; i < layers.arraySize; i++)
         {
             SerializedProperty slot = layers.GetArrayElementAtIndex(i);
@@ -75,6 +80,8 @@ public static class ProjectSetup
         return false;
     }
 
+    // Creates the player object with a Rigidbody2D, collider, PlayerController,
+    // GrapplingHook, and the GroundCheck and Rope children, all linked together.
     private static void BuildPlayer(int groundLayer, int grappleLayer)
     {
         var player = new GameObject("Player");
@@ -82,13 +89,13 @@ public static class ProjectSetup
 
         var rb = player.AddComponent<Rigidbody2D>();
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
-        rb.interpolation = RigidbodyInterpolation2D.Interpolate; // Smoother with the following camera.
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate; // Smooths out movement between physics steps so the camera doesn't jitter.
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
 
         var capsule = player.AddComponent<CapsuleCollider2D>();
         capsule.size = new Vector2(1f, 2f);
 
-        // GrapplingHook requires a DistanceJoint2D, so Unity adds one with it.
+        // GrapplingHook needs a DistanceJoint2D, so Unity adds one along with it.
         PlayerController controller = player.AddComponent<PlayerController>();
         GrapplingHook grapple = player.AddComponent<GrapplingHook>();
 
@@ -114,12 +121,13 @@ public static class ProjectSetup
         SetLayerMask(grapple, "blockingLayers", 1 << groundLayer);
 
         // Character art, squash and stretch, and rope style.
-        LevelKit.StylePlayer(player); // Adds the character art on a "Body" child.
+        LevelKit.StylePlayer(player); // Adds the character art on a child named Body.
 
         EditorSceneManager.MarkSceneDirty(player.scene);
         Selection.activeGameObject = player;
     }
 
+    // Loads the rope's material from Assets/Art, or makes it if it's missing.
     private static Material GetOrCreateRopeMaterial()
     {
         var existing = AssetDatabase.LoadAssetAtPath<Material>(RopeMaterialPath);
@@ -134,6 +142,7 @@ public static class ProjectSetup
         return mat;
     }
 
+    // Sets a private [SerializeField] field so it saves with the scene.
     private static void SetRef(Object target, string field, Object value)
     {
         var so = new SerializedObject(target);
@@ -141,6 +150,7 @@ public static class ProjectSetup
         so.ApplyModifiedProperties();
     }
 
+    // Sets a private LayerMask field so it saves with the scene.
     private static void SetLayerMask(Object target, string field, int mask)
     {
         var so = new SerializedObject(target);

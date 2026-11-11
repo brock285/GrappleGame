@@ -1,31 +1,34 @@
 fileFormatVersion: 2
-guid: 6ff00318865012348b77f572a00fcba0
+guid: fdb48b2e0e63b7b44b6a30d7873d44bd
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -6164834272971422932
-    second: Towers_0
+      213: 4979524361614637217
+    second: CityNear_0
   - first:
-      213: 6740741442962960701
-    second: Towers_1
+      213: 1668594964245287089
+    second: CityNear_1
   - first:
-      213: -2545511984063369323
-    second: Towers_2
+      213: 3561338507732635624
+    second: CityNear_2
   - first:
-      213: 6137813302077351160
-    second: Towers_3
+      213: 7678809532433718942
+    second: CityNear_3
   - first:
-      213: 1281890600674870062
-    second: Towers_4
+      213: -5924569713007921764
+    second: CityNear_4
   - first:
-      213: -8760288009359856575
-    second: Towers_5
+      213: 5025296618929604020
+    second: CityNear_5
   - first:
-      213: 9009940924685856453
-    second: Towers_6
+      213: 6448714873910295873
+    second: CityNear_6
   - first:
-      213: -3495968029663358996
-    second: Towers_7
+      213: -5487278087789558176
+    second: CityNear_7
+  - first:
+      213: 8592442113007245491
+    second: CityNear_8
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -136,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Towers_0
+      name: CityNear_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 7
-        height: 23
+        width: 22
+        height: 185
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -151,20 +154,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: c23826434eb127aa0800000000000000
-      internalID: -6164834272971422932
+      spriteID: 1a8b1743603da1540800000000000000
+      internalID: 4979524361614637217
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_1
+      name: CityNear_1
       rect:
         serializedVersion: 2
-        x: 8
+        x: 21
         y: 0
-        width: 7
-        height: 43
+        width: 20
+        height: 343
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -173,20 +176,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: d31bf8ed0aceb8d50800000000000000
-      internalID: 6740741442962960701
+      spriteID: 1b098d5874a082710800000000000000
+      internalID: 1668594964245287089
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_2
+      name: CityNear_2
       rect:
         serializedVersion: 2
-        x: 15
+        x: 46
         y: 0
-        width: 8
-        height: 24
+        width: 26
+        height: 547
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -195,20 +198,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 59f276256568cacd0800000000000000
-      internalID: -2545511984063369323
+      spriteID: 8efc256018a6c6130800000000000000
+      internalID: 3561338507732635624
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_3
+      name: CityNear_3
       rect:
         serializedVersion: 2
-        x: 24
+        x: 75
         y: 0
-        width: 8
-        height: 45
+        width: 26
+        height: 274
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -217,20 +220,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 8f4ecffbda4ed2550800000000000000
-      internalID: 6137813302077351160
+      spriteID: e9e589ee59c909a60800000000000000
+      internalID: 7678809532433718942
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_4
+      name: CityNear_4
       rect:
         serializedVersion: 2
-        x: 31
+        x: 100
         y: 0
-        width: 7
-        height: 51
+        width: 23
+        height: 360
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -239,20 +242,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: e234326a5b03ac110800000000000000
-      internalID: 1281890600674870062
+      spriteID: c95ff195c33b7cda0800000000000000
+      internalID: -5924569713007921764
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_5
+      name: CityNear_5
       rect:
         serializedVersion: 2
-        x: 39
+        x: 126
         y: 0
-        width: 8
-        height: 24
+        width: 17
+        height: 562
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -261,20 +264,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 14cedff28743d6680800000000000000
-      internalID: -8760288009359856575
+      spriteID: 4b5454656a07db540800000000000000
+      internalID: 5025296618929604020
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_6
+      name: CityNear_6
       rect:
         serializedVersion: 2
-        x: 47
+        x: 145
         y: 0
-        width: 7
-        height: 51
+        width: 25
+        height: 198
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -283,20 +286,20 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 5cea727c88db90d70800000000000000
-      internalID: 9009940924685856453
+      spriteID: 14d7335d2007e7950800000000000000
+      internalID: 6448714873910295873
       vertices: []
       indices: 
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Towers_7
+      name: CityNear_7
       rect:
         serializedVersion: 2
-        x: 55
+        x: 175
         y: 0
-        width: 7
-        height: 42
+        width: 31
+        height: 474
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -305,8 +308,30 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: cef0bc57993db7fc0800000000000000
-      internalID: -3495968029663358996
+      spriteID: 066c489e6a549d3b0800000000000000
+      internalID: -5487278087789558176
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: CityNear_8
+      rect:
+        serializedVersion: 2
+        x: 213
+        y: 0
+        width: 21
+        height: 503
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3b857eab39c7e3770800000000000000
+      internalID: 8592442113007245491
       vertices: []
       indices: 
       edges: []
@@ -325,14 +350,15 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Towers_0: -6164834272971422932
-      Towers_1: 6740741442962960701
-      Towers_2: -2545511984063369323
-      Towers_3: 6137813302077351160
-      Towers_4: 1281890600674870062
-      Towers_5: -8760288009359856575
-      Towers_6: 9009940924685856453
-      Towers_7: -3495968029663358996
+      CityNear_0: 4979524361614637217
+      CityNear_1: 1668594964245287089
+      CityNear_2: 3561338507732635624
+      CityNear_3: 7678809532433718942
+      CityNear_4: -5924569713007921764
+      CityNear_5: 5025296618929604020
+      CityNear_6: 6448714873910295873
+      CityNear_7: -5487278087789558176
+      CityNear_8: 8592442113007245491
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

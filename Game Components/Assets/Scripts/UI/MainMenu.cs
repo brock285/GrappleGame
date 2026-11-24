@@ -26,8 +26,10 @@ public class MainMenu : MonoBehaviour
 
     private void Start()
     {
-        // Make sure time runs normally, in case the player came here from the pause menu.
+        // Make sure time runs normally and the mouse pointer shows, in case the
+        // player came here from the pause menu.
         Time.timeScale = 1f;
+        Cursor.visible = true;
         ShowPanel(mainPanel);
         RefreshBestTime();
     }

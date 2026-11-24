@@ -6,13 +6,23 @@ using UnityEngine.InputSystem;
 /// The grappling hook, which is the game's main way to climb. The player
 /// presses the left mouse button to fire the hook toward the cursor (R04, UC4)
 /// and lets go of the button to release it. While hooked, they can swing
-/// with A and D (UC5, handled in PlayerController) and hold W or Space to
-/// reel in or S to let out more rope (UC6).
+/// with A and D (UC5, handled in PlayerController) and hold W to reel in or
+/// S to let out more rope (UC6). Space is the jump button, so it doesn't reel.
 ///
 /// Only objects on the Grappleable layer can be hooked, so the hook doesn't
 /// work on every wall (UC4). Objects on the Ground layer block the hook, so
 /// the player can't grab a point through a wall. A small aim assist lets near
 /// misses still count.
+///
+/// The hook has a max distance of 12 units, for both firing and letting out
+/// rope. The player can also only hang for a limited time (5 seconds by
+/// default). The rope turns red and blinks near the end of that time, then it
+/// gives out and the player falls, so nobody can rest on one grapple point forever.
+///
+/// The rope breaks if a piece of the level, like a wall, a ledge, or a moving
+/// platform, ends up between the player and the anchor. That stops the player
+/// from swinging the rope through solid ground, and it means a moving
+/// platform can cut the rope.
 ///
 /// The rope is a DistanceJoint2D. It keeps the player from getting farther
 /// than the rope length from the anchor, but it can go slack, so it acts like
@@ -23,7 +33,7 @@ using UnityEngine.InputSystem;
 public class GrapplingHook : MonoBehaviour
 {
     [Header("Targeting")]
-    // The farthest the hook can reach, in units.
+    [Tooltip("The max distance of the hook, in units. It's the farthest the hook can reach and the longest the rope can get.")]
     [SerializeField] private float maxRange = 12f;
     [SerializeField] private LayerMask grappleableLayers;
     [Tooltip("Layers that block the hook, such as walls and floors.")]
@@ -41,6 +51,27 @@ public class GrapplingHook : MonoBehaviour
     // Draws the rope as a line from the player to the anchor.
     [SerializeField] private LineRenderer rope;
 
+    [Tooltip("Seconds something has to stay in the way before the rope breaks. A tiny delay stops it from breaking on a single glitchy physics step.")]
+    [SerializeField] private float breakDelay = 0.04f;
+
+    // Seconds the rope has been blocked so far.
+    private float blockedTime;
+
+    [Header("Hang limit")]
+    [Tooltip("Seconds the player can stay hooked before the rope gives out.")]
+    [SerializeField] private float hangLimit = 5f;
+
+    [Tooltip("Seconds before the limit when the rope starts turning red and blinking as a warning.")]
+    [SerializeField] private float hangWarningTime = 1.5f;
+
+    [SerializeField] private Color hangWarningColor = new Color(1f, 0.25f, 0.2f);
+
+    // Seconds the player has been hooked this time.
+    private float hangTimer;
+
+    // The rope's normal colors, saved so they can come back after the warning.
+    private Color ropeStartColor, ropeEndColor;
+
     private DistanceJoint2D joint;
     private Camera cam;
 
@@ -50,6 +81,9 @@ public class GrapplingHook : MonoBehaviour
     /// <summary>The point in the world the rope is attached to.</summary>
     public Vector2 AnchorPoint { get; private set; }
 
+    /// <summary>Seconds left before the rope gives out, or 0 when not hooked.</summary>
+    public float HangTimeLeft => IsAttached ? Mathf.Max(0f, hangLimit - hangTimer) : 0f;
+
     /// <summary>The farthest the hook can reach, in units.</summary>
     public float MaxRange => maxRange;
 
@@ -58,6 +92,9 @@ public class GrapplingHook : MonoBehaviour
 
     /// <summary>Raised when the hook attaches. It passes the anchor point. PlayerVisuals and AudioManager listen to it.</summary>
     public event Action<Vector2> Attached;
+
+    /// <summary>Raised when something in the level cuts the rope. It passes the point where it broke.</summary>
+    public event Action<Vector2> RopeBroken;
 
     /// <summary>Raised when the hook lets go, for any reason.</summary>
     public event Action Detached;
@@ -77,6 +114,8 @@ public class GrapplingHook : MonoBehaviour
         {
             rope.positionCount = 2;
             rope.enabled = false;
+            ropeStartColor = rope.startColor;
+            ropeEndColor = rope.endColor;
         }
     }
 
@@ -112,12 +151,72 @@ public class GrapplingHook : MonoBehaviour
         if (IsAttached) HandleReel();
     }
 
+    // Checks every physics step whether a piece of the level is in the way of
+    // the rope, and breaks the rope if it stays there for breakDelay seconds.
+    private void FixedUpdate()
+    {
+        if (!IsAttached)
+        {
+            blockedTime = 0f;
+            return;
+        }
+
+        // The hang limit. Physics time stops while paused, so pausing doesn't use it up.
+        hangTimer += Time.fixedDeltaTime;
+        if (hangTimer >= hangLimit)
+        {
+            BreakRope(AnchorPoint);
+            return;
+        }
+
+        Vector2 from = transform.position;
+        Vector2 toAnchor = AnchorPoint - from;
+        float distance = toAnchor.magnitude;
+        if (distance < 0.3f) return;
+
+        // Stop just short of the anchor, so whatever the hook is stuck to doesn't count.
+        RaycastHit2D hit = Physics2D.Raycast(from, toAnchor / distance, distance - 0.15f, blockingLayers);
+        if (hit.collider == null)
+        {
+            blockedTime = 0f;
+            return;
+        }
+
+        blockedTime += Time.fixedDeltaTime;
+        if (blockedTime >= breakDelay) BreakRope(hit.point);
+    }
+
+    // Lets go of the hook because something cut the rope.
+    private void BreakRope(Vector2 point)
+    {
+        blockedTime = 0f;
+        Detach();
+        RopeBroken?.Invoke(point);
+    }
+
     // Moves the ends of the rope line after the player has moved this frame.
     private void LateUpdate()
     {
         if (rope == null || !IsAttached) return;
         rope.SetPosition(0, transform.position);
         rope.SetPosition(1, AnchorPoint);
+
+        // Warn the player as the hang limit gets close. The rope fades to red
+        // and blinks faster and faster until it gives out.
+        float left = hangLimit - hangTimer;
+        if (left < hangWarningTime)
+        {
+            float t = 1f - left / hangWarningTime;
+            bool blinkOn = Mathf.Repeat(Time.time * (4f + 8f * t), 1f) < 0.5f;
+            Color warn = blinkOn ? hangWarningColor : Color.Lerp(ropeStartColor, hangWarningColor, t);
+            rope.startColor = warn;
+            rope.endColor = warn;
+        }
+        else
+        {
+            rope.startColor = ropeStartColor;
+            rope.endColor = ropeEndColor;
+        }
     }
 
     /// <summary>
@@ -163,20 +262,21 @@ public class GrapplingHook : MonoBehaviour
         AnchorPoint = point;
         joint.connectedAnchor = point; // No connected body, so this is a world position.
         joint.distance = Vector2.Distance(transform.position, point); // Start with the rope exactly as long as the gap.
+        hangTimer = 0f; // Each new grab gets the full hang time.
         joint.enabled = true;
 
         if (rope != null) rope.enabled = true;
         Attached?.Invoke(point);
     }
 
-    // W or Space shortens the rope and S lengthens it, up to the hook's range (UC6).
+    // W shortens the rope and S lengthens it, up to the hook's range (UC6).
     private void HandleReel()
     {
         Keyboard kb = Keyboard.current;
         if (kb == null) return;
 
         float change = 0f;
-        if (kb.wKey.isPressed || kb.spaceKey.isPressed) change -= reelSpeed;
+        if (kb.wKey.isPressed) change -= reelSpeed;
         if (kb.sKey.isPressed) change += reelSpeed;
 
         joint.distance = Mathf.Clamp(joint.distance + change * Time.deltaTime, minRopeLength, maxRange);

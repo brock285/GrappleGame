@@ -19,7 +19,7 @@ public class FinishLine : MonoBehaviour
         // Only the player can finish, and only once. Without the IsFinished
         // check, touching the line twice would save the time twice.
         if (other.GetComponent<PlayerController>() == null || GameManager.Instance == null) return;
-        if (GameManager.Instance.IsFinished) return;
+        if (GameManager.Instance.IsFinished || GameManager.Instance.IsGameOver) return;
 
         // Celebrate with bursts in green, gold, and white.
         Vector2 p = other.transform.position;

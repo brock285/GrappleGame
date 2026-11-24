@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Shows the frame rate in the top left corner of the screen so we can check
+/// Shows the frame rate in the bottom left corner of the screen so we can check
 /// NFR2, which says the game has to stay above 60 frames per second on the lab
 /// computers. Pressing F8 turns it on and off. It starts hidden, so players
 /// never see it unless they press the key.
@@ -91,12 +91,14 @@ public class FrameRateCounter : MonoBehaviour
         string low = lowestFps < float.MaxValue ? Colored(lowestFps) : "...";
         string text = $"FPS {avg}   Lowest {low}";
 
-        // A dark box behind the text so it's readable on any background.
-        var box = new Rect(10f, 10f, 330f, 36f);
+        // A dark box behind the text so it's readable on any background. It
+        // sits in the bottom left so it doesn't cover the hearts.
+        float top = Screen.height - 46f;
+        var box = new Rect(10f, top, 330f, 36f);
         GUI.color = new Color(0f, 0f, 0f, 0.6f);
         GUI.DrawTexture(box, Texture2D.whiteTexture);
         GUI.color = Color.white;
-        GUI.Label(new Rect(20f, 14f, 320f, 30f), text, style);
+        GUI.Label(new Rect(20f, top + 4f, 320f, 30f), text, style);
     }
 
     // Rounds the number and colors it green if it meets the target or red if it doesn't.

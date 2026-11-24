@@ -8,6 +8,11 @@ using UnityEngine.InputSystem;
 /// swing so they can build momentum (UC5). In the air, the player keeps the
 /// speed they got from a swing instead of slowing down right away.
 ///
+/// Space jumps while the player is on the ground. A tap gives a short hop and
+/// holding Space gives a full jump. Two small helpers make jumping feel fair.
+/// The player can still jump for a split second after walking off a ledge,
+/// and a press just before landing still counts once they touch down.
+///
 /// It also caps how fast the player can fall, makes ice slippery, and handles
 /// getting knocked back by hazards (R07). The player needs a Rigidbody2D and
 /// a child object named GroundCheck at their feet.
@@ -30,6 +35,20 @@ public class PlayerController : MonoBehaviour
     [Tooltip("Fastest the player can fall, so long drops stay controllable.")]
     [SerializeField] private float maxFallSpeed = 22f;
 
+    [Header("Jumping")]
+    // How high a full jump goes, in units. The player is 2 units tall.
+    [SerializeField] private float jumpHeight = 2.2f;
+
+    [Tooltip("Seconds after walking off a ledge when a jump still works.")]
+    [SerializeField] private float coyoteTime = 0.1f;
+
+    [Tooltip("Seconds before landing when a jump press still counts.")]
+    [SerializeField] private float jumpBufferTime = 0.12f;
+
+    [Tooltip("How much upward speed is kept when Space is let go early. Lower makes taps shorter.")]
+    [Range(0f, 1f)]
+    [SerializeField] private float jumpCutMultiplier = 0.5f;
+
     [Tooltip("Seconds without control after a hazard hit, so the knockback carries the player back.")]
     [SerializeField] private float hitStunTime = 0.4f;
 
@@ -45,6 +64,11 @@ public class PlayerController : MonoBehaviour
     private float lastFallSpeed;    // Used to tell how hard the player landed.
     private float groundGrip = 1f;  // 1 on normal ground, lower on ice.
     private float stunTimer;        // Seconds left before input works again after a hit.
+    private float coyoteTimer;      // Seconds left when a jump still works after leaving the ground.
+    private float jumpBufferTimer;  // Seconds left when a recent Space press can still turn into a jump.
+    private float jumpLockTimer;    // Stops the ground check from cancelling a jump right after takeoff.
+    private bool jumpCutRequested;  // True when Space was let go.
+    private bool isJumping;         // True from a jump until the player lands, so only real jumps get cut short.
 
     /// <summary>True while the player is standing on the ground.</summary>
     public bool IsGrounded { get; private set; }
@@ -63,6 +87,9 @@ public class PlayerController : MonoBehaviour
 
     /// <summary>Raised when a hazard knocks the player back. It passes the direction of the push.</summary>
     public event Action<Vector2> Hit;
+
+    /// <summary>Raised when the player jumps. PlayerVisuals and AudioManager listen to it.</summary>
+    public event Action Jumped;
 
     private void Awake()
     {
@@ -94,8 +121,15 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (stunTimer > 0f) stunTimer -= Time.deltaTime;
-        horizontalInput = InputEnabled && stunTimer <= 0f ? ReadHorizontal() : 0f;
+        bool canControl = InputEnabled && stunTimer <= 0f;
+        horizontalInput = canControl ? ReadHorizontal() : 0f;
         if (horizontalInput != 0f) Facing = horizontalInput > 0f ? 1 : -1;
+
+        // Remember a Space press for a moment, so pressing just before landing still jumps.
+        Keyboard kb = Keyboard.current;
+        if (jumpBufferTimer > 0f) jumpBufferTimer -= Time.deltaTime;
+        if (canControl && kb != null && kb.spaceKey.wasPressedThisFrame) jumpBufferTimer = jumpBufferTime;
+        if (kb != null && kb.spaceKey.wasReleasedThisFrame) jumpCutRequested = true;
     }
 
     /// <summary>Returns -1 for left (A or left arrow), 1 for right (D or right arrow), or 0 for neither or both.</summary>
@@ -124,6 +158,8 @@ public class PlayerController : MonoBehaviour
 
         if (IsGrounded && !wasGrounded && lastFallSpeed > 2f) Landed?.Invoke(lastFallSpeed);
 
+        HandleJump();
+
         if (grapple != null && grapple.IsAttached)
             ApplySwing();
         else
@@ -134,6 +170,47 @@ public class PlayerController : MonoBehaviour
         if (v.y < -maxFallSpeed) rb.linearVelocity = new Vector2(v.x, -maxFallSpeed);
 
         lastFallSpeed = Mathf.Max(0f, -rb.linearVelocity.y);
+    }
+
+    // Jumps if Space was pressed recently and the player is on the ground, or
+    // just left it. Letting go of Space early cuts the jump short.
+    private void HandleJump()
+    {
+        if (jumpLockTimer > 0f) jumpLockTimer -= Time.fixedDeltaTime;
+        if (IsGrounded && jumpLockTimer <= 0f)
+        {
+            coyoteTimer = coyoteTime;
+            isJumping = false;
+        }
+        else
+        {
+            coyoteTimer -= Time.fixedDeltaTime;
+        }
+
+        bool hooked = grapple != null && grapple.IsAttached;
+        if (jumpBufferTimer > 0f && coyoteTimer > 0f && !hooked)
+        {
+            // The launch speed needed to reach jumpHeight under this body's gravity.
+            float gravity = -Physics2D.gravity.y * rb.gravityScale;
+            float launchSpeed = Mathf.Sqrt(2f * gravity * jumpHeight);
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, launchSpeed);
+
+            jumpBufferTimer = 0f;
+            coyoteTimer = 0f;
+            jumpLockTimer = 0.15f;
+            jumpCutRequested = false;
+            isJumping = true;
+            Jumped?.Invoke();
+        }
+        else if (jumpCutRequested)
+        {
+            jumpCutRequested = false;
+            Vector2 v = rb.linearVelocity;
+            // Only cut a real jump, so letting go of Space never slows down a fling from a swing.
+            if (isJumping && v.y > 0f && !hooked)
+                rb.linearVelocity = new Vector2(v.x, v.y * jumpCutMultiplier);
+            isJumping = false;
+        }
     }
 
     private void ApplySwing()

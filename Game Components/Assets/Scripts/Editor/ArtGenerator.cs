@@ -36,6 +36,14 @@ public static class ArtGenerator
     public static Sprite Marker => GetOrCreate("AimMarker", 16, 16, 20, Vector4.zero, DrawMarker);
     public static Sprite Checker => GetOrCreate("Checker", 8, 8, 8, Vector4.zero, DrawChecker, repeat: true);
 
+    // One heart for the health display. It's white with a dark outline, so the
+    // HUD can tint it red for a full heart or dark for a lost one.
+    public static Sprite Heart => GetOrCreate("Heart", 11, 10, 10, Vector4.zero, DrawHeart);
+
+    // The aiming crosshair that replaces the mouse pointer during play. It's
+    // white, so the Crosshair script can tint it when a target is in reach.
+    public static Sprite Crosshair => GetOrCreate("Crosshair", 17, 17, 16, Vector4.zero, DrawCrosshair);
+
     /// <summary>
     /// Deletes the saved art and draws it all again. Runs from Tools, Grappler,
     /// Regenerate Art. Rebuild the level afterward to use the new art.
@@ -43,11 +51,11 @@ public static class ArtGenerator
     [MenuItem("Tools/Grappler/Regenerate Art", priority = 50)]
     public static void Regenerate()
     {
-        foreach (string name in new[] { "Block", "Spikes", "GrapplePoint", "Player", "Sky", "Towers", "CityFar", "CityMid", "CityNear", "AimMarker", "Checker" })
+        foreach (string name in new[] { "Block", "Spikes", "GrapplePoint", "Player", "Sky", "Towers", "CityFar", "CityMid", "CityNear", "AimMarker", "Checker", "Heart", "Crosshair" })
             AssetDatabase.DeleteAsset($"{Folder}/{name}.png");
 
         // Reading each property makes it draw and save that sprite again.
-        _ = Block; _ = Spikes; _ = GrapplePoint; _ = Player; _ = Sky; _ = CityFar; _ = CityMid; _ = CityNear; _ = Marker; _ = Checker;
+        _ = Block; _ = Spikes; _ = GrapplePoint; _ = Player; _ = Sky; _ = CityFar; _ = CityMid; _ = CityNear; _ = Marker; _ = Checker; _ = Heart; _ = Crosshair;
         Debug.Log("Grappler: art regenerated in Assets/Art. Run Build Test Level to apply it.");
     }
 
@@ -282,6 +290,71 @@ public static class ArtGenerator
             bool light = ((x / 4) + (y / 4)) % 2 == 0;
             float v = light ? 1f : 0.3f;
             px[y * w + x] = new Color(v, v, v, 1f);
+        }
+    }
+
+    // A pixel heart. Each string is one row from top to bottom, and X marks a
+    // filled pixel. Filled pixels next to an empty one become the outline.
+    private static void DrawHeart(Color[] px, int w, int h)
+    {
+        string[] rows =
+        {
+            "..XXX.XXX..",
+            ".XXXXXXXXX.",
+            "XXXXXXXXXXX",
+            "XXXXXXXXXXX",
+            "XXXXXXXXXXX",
+            ".XXXXXXXXX.",
+            "..XXXXXXX..",
+            "...XXXXX...",
+            "....XXX....",
+            ".....X.....",
+        };
+
+        bool Filled(int x, int y) => x >= 0 && x < w && y >= 0 && y < h && rows[h - 1 - y][x] == 'X';
+
+        for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+        {
+            if (!Filled(x, y))
+            {
+                px[y * w + x] = Color.clear;
+                continue;
+            }
+            bool edge = !Filled(x - 1, y) || !Filled(x + 1, y) || !Filled(x, y - 1) || !Filled(x, y + 1);
+            bool shine = x == 2 && (y == h - 4 || y == h - 3); // A small highlight near the top left
+            float v = edge ? 0.25f : (shine ? 1f : 0.85f);
+            px[y * w + x] = new Color(v, v, v, 1f);
+        }
+    }
+
+    // A ring with four gaps, short ticks pointing in, and a dot in the
+    // middle. A dark border around every white pixel keeps it visible on
+    // light and dark backgrounds.
+    private static void DrawCrosshair(Color[] px, int w, int h)
+    {
+        int c = w / 2;
+        bool White(int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= w || y >= h) return false;
+            int dx = x - c, dy = y - c;
+            float d = Mathf.Sqrt(dx * dx + dy * dy);
+            bool ring = d >= 5.5f && d <= 6.6f && Mathf.Abs(dx) > 1 && Mathf.Abs(dy) > 1;
+            bool tick = (dx == 0 && Mathf.Abs(dy) >= 3 && Mathf.Abs(dy) <= 7) || (dy == 0 && Mathf.Abs(dx) >= 3 && Mathf.Abs(dx) <= 7);
+            bool dot = dx == 0 && dy == 0;
+            return ring || tick || dot;
+        }
+
+        for (int y = 0; y < h; y++)
+        for (int x = 0; x < w; x++)
+        {
+            if (White(x, y))
+            {
+                px[y * w + x] = Color.white;
+                continue;
+            }
+            bool border = White(x - 1, y) || White(x + 1, y) || White(x, y - 1) || White(x, y + 1);
+            px[y * w + x] = border ? new Color(0f, 0f, 0f, 0.6f) : Color.clear;
         }
     }
 

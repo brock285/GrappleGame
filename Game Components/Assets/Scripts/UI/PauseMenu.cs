@@ -23,9 +23,9 @@ public class PauseMenu : MonoBehaviour
         Keyboard kb = Keyboard.current;
         if (kb == null || !kb.escapeKey.wasPressedThisFrame) return;
 
-        // There's nothing to pause on the victory screen.
+        // There's nothing to pause on the intro screen, the victory screen, or while the game restarts after running out of hearts.
         GameManager gm = GameManager.Instance;
-        if (gm == null || gm.IsFinished) return;
+        if (gm == null || gm.IsFinished || gm.IsGameOver || gm.IsIntroOpen) return;
 
         if (controlsPanel != null && controlsPanel.activeSelf)
         {

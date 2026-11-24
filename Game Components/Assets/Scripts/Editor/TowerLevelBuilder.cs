@@ -6,8 +6,9 @@ using UnityEngine;
 /// tower described in our SRS. The player climbs about 135 units through five
 /// stages, and each one gets harder and teaches one new thing.
 ///
-/// Section 1 (y 0 to 20) is the tutorial, with wide ledges, big grapple points,
-/// and hint text for the controls. Section 2 (y 20 to 46) has narrow ledges,
+/// Section 1 (y 0 to 20) is the tutorial, with wide ledges and big grapple
+/// points. The level itself has no text, since the intro screen explains the
+/// controls before the climb starts. Section 2 (y 20 to 46) has narrow ledges,
 /// long falls (R08), and spikes waiting where a bad swing ends up. Section 3
 /// (y 44 to 68) adds slippery ice and moving platforms. Section 4 (y 68 to 99)
 /// has timed spikes and fewer grapple points. Section 5 (y 97 to 137) is the
@@ -78,15 +79,12 @@ public static class TowerLevelBuilder
         LevelKit.Ground("Ceiling", new Vector2(0f, 147.5f), new Vector2(26f, 1f), g, LevelKit.WallColor);
     }
 
-    // Section 1: learn to walk, grapple, swing, and avoid spikes.
+    // Section 1: learn to walk, grapple, swing, and avoid spikes. There's no
+    // text in the level. The intro screen explains the controls before the climb.
     private static void BuildTutorial(Transform g)
     {
-        LevelKit.Hint("A / D to move", new Vector2(0f, 0.3f), g);
-        LevelKit.Hint("Hold LEFT MOUSE on orange blocks to grapple", new Vector2(0f, 2f), g);
-        LevelKit.Hint("While hooked: A / D to swing, W to reel in, S to let out", new Vector2(0f, 3.7f), g, 2.6f);
 
         LevelKit.Spikes("Floor Spikes", new Vector2(7f, -2.25f), 3f, g);
-        LevelKit.Hint("Red spikes knock you back", new Vector2(7.5f, -1f), g, 2f);
 
         LevelKit.GrapplePoint("Grapple 1", new Vector2(0f, 8f), new Vector2(3f, 1f), g);
         LevelKit.Ground("Ledge 1L", new Vector2(-7f, 5f), new Vector2(5f, 0.5f), g);
@@ -101,7 +99,6 @@ public static class TowerLevelBuilder
     // to the sides, so swinging too far or falling short gets punished.
     private static void BuildGaps(Transform g)
     {
-        LevelKit.Hint("Miss a gap and you fall a long way", new Vector2(-5f, 22f), g, 2.4f);
 
         LevelKit.GrapplePoint("Grapple 4", new Vector2(-3f, 26f), new Vector2(1.5f, 1f), g);
         LevelKit.Ground("Narrow 1", new Vector2(1f, 23f), new Vector2(1.5f, 0.5f), g, Section2Color);
@@ -122,7 +119,6 @@ public static class TowerLevelBuilder
     {
         LevelKit.Ice("Ice 1", new Vector2(-4f, 44f), new Vector2(7f, 0.5f), g);
         LevelKit.Spikes("Ice 1 Spikes", new Vector2(-6.75f, 44.5f), 1.5f, g);
-        LevelKit.Hint("Ice is slippery", new Vector2(-3f, 46.8f), g, 2.6f);
 
         LevelKit.GrapplePoint("Grapple 9", new Vector2(2f, 51f), new Vector2(1.5f, 1f), g);
         LevelKit.MovingPlatform("Mover 1", new Vector2(-8f, 49f), new Vector2(-1f, 49f), 3f, 2f, g);
@@ -145,7 +141,6 @@ public static class TowerLevelBuilder
     // Section 4: spikes that pop up on a timer and fewer grapple points.
     private static void BuildTiming(Transform g)
     {
-        LevelKit.Hint("Orange spikes pop up. Watch the timing.", new Vector2(-4f, 67.6f), g, 2.4f);
 
         LevelKit.GrapplePoint("Grapple 13", new Vector2(0f, 72f), new Vector2(1.5f, 1f), g);
         LevelKit.Ground("Timed Ledge 1", new Vector2(1f, 69f), new Vector2(7f, 0.5f), g, Section4Color);
@@ -173,7 +168,6 @@ public static class TowerLevelBuilder
     // ledges, timed spikes, and floating spikes, then the finish at the top.
     private static void BuildLastStretch(Transform g)
     {
-        LevelKit.Hint("The last stretch mixes everything", new Vector2(-6f, 99.5f), g, 2.4f);
 
         LevelKit.GrapplePoint("Grapple 20", new Vector2(6f, 106f), new Vector2(1.5f, 1f), g);
         LevelKit.Ice("Ice 3", new Vector2(8f, 103f), new Vector2(4f, 0.5f), g);
@@ -198,6 +192,5 @@ public static class TowerLevelBuilder
         LevelKit.GrapplePoint("Grapple 26", new Vector2(-2f, 137f), new Vector2(2f, 1f), g);
         LevelKit.Ground("Top Ledge", new Vector2(2f, 133f), new Vector2(6f, 0.5f), g, Section5Color);
         LevelKit.Finish(new Vector2(2f, 134.5f), new Vector2(6f, 2.5f), g);
-        LevelKit.Hint("Top of the tower", new Vector2(3f, 140f), g);
     }
 }

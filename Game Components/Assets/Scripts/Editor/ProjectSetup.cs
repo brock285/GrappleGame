@@ -98,6 +98,7 @@ public static class ProjectSetup
         // GrapplingHook needs a DistanceJoint2D, so Unity adds one along with it.
         PlayerController controller = player.AddComponent<PlayerController>();
         GrapplingHook grapple = player.AddComponent<GrapplingHook>();
+        player.AddComponent<PlayerHealth>();
 
         var groundCheck = new GameObject("GroundCheck");
         groundCheck.transform.SetParent(player.transform, false);

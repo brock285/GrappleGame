@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// Knocks the player back when they touch it (R07). It goes on any obstacle
+/// Hurts the player and knocks them back when they touch it (R07). Each hit
+/// costs a heart, unless the player was just hit. It goes on any obstacle
 /// with a Collider2D, like spikes, and works with both solid colliders and
 /// triggers. The push always goes away from the hazard, so the player gets
 /// sent back the way they came.
@@ -13,6 +14,9 @@ public class Hazard : MonoBehaviour
 
     // How hard the push is. Higher values throw the player farther.
     [SerializeField] private float knockbackStrength = 10f;
+
+    // How many hearts one hit costs.
+    [SerializeField] private int damage = 1;
 
     private void OnCollisionEnter2D(Collision2D collision) => TryHit(collision.collider);
 
@@ -28,6 +32,7 @@ public class Hazard : MonoBehaviour
         bool playerIsLeft = other.transform.position.x < transform.position.x;
         dir.x = Mathf.Abs(dir.x) * (playerIsLeft ? -1f : 1f);
 
+        if (player.TryGetComponent(out PlayerHealth health)) health.TakeDamage(damage);
         player.Knockback(dir * knockbackStrength);
     }
 }

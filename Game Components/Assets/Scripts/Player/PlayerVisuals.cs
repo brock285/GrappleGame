@@ -2,9 +2,11 @@ using UnityEngine;
 
 /// <summary>
 /// Handles how the player looks. The sprite faces the way the player is
-/// moving, leans into movement, squashes on a landing, stretches when the hook
-/// catches, and flashes red when hit. It also makes dust when the player lands
-/// and sparks where the hook attaches. None of this changes gameplay.
+/// moving, leans into movement, stretches on a jump, squashes on a landing, stretches when the hook
+/// catches, and flashes red when hit. It blinks while the player can't be hurt
+/// after a hit, and it bursts apart when the player runs out of hearts. It
+/// also makes dust when the player lands, sparks where the hook attaches, and
+/// a puff where the rope breaks. None of this changes gameplay.
 ///
 /// It goes on the Player object. The sprite has to be on a child object named
 /// Body, so squashing and stretching the picture doesn't change the size of
@@ -25,6 +27,7 @@ public class PlayerVisuals : MonoBehaviour
 
     private PlayerController controller;
     private GrapplingHook grapple;
+    private PlayerHealth health;
     private Vector3 baseScale;
     private Vector3 squash = Vector3.one; // 1 on each axis is normal size.
     private Color baseColor;
@@ -34,6 +37,7 @@ public class PlayerVisuals : MonoBehaviour
     {
         controller = GetComponent<PlayerController>();
         grapple = GetComponent<GrapplingHook>();
+        health = GetComponent<PlayerHealth>();
 
         if (body == null)
         {
@@ -53,8 +57,14 @@ public class PlayerVisuals : MonoBehaviour
         {
             controller.Landed += OnLanded;
             controller.Hit += OnHit;
+            controller.Jumped += OnJumped;
         }
-        if (grapple != null) grapple.Attached += OnAttached;
+        if (grapple != null)
+        {
+            grapple.Attached += OnAttached;
+            grapple.RopeBroken += OnRopeBroken;
+        }
+        if (health != null) health.Died += OnDied;
     }
 
     private void OnDisable()
@@ -63,8 +73,14 @@ public class PlayerVisuals : MonoBehaviour
         {
             controller.Landed -= OnLanded;
             controller.Hit -= OnHit;
+            controller.Jumped -= OnJumped;
         }
-        if (grapple != null) grapple.Attached -= OnAttached;
+        if (grapple != null)
+        {
+            grapple.Attached -= OnAttached;
+            grapple.RopeBroken -= OnRopeBroken;
+        }
+        if (health != null) health.Died -= OnDied;
     }
 
     private void Update()
@@ -94,6 +110,12 @@ public class PlayerVisuals : MonoBehaviour
                 bool on = Mathf.Repeat(flashTimer, 0.1f) > 0.05f;
                 bodyRenderer.color = on ? hitColor : baseColor;
             }
+            else if (health != null && health.IsInvulnerable)
+            {
+                // Blink see-through while the player can't be hurt.
+                bool faded = Mathf.Repeat(Time.time, 0.16f) < 0.08f;
+                bodyRenderer.color = new Color(baseColor.r, baseColor.g, baseColor.b, faded ? 0.35f : baseColor.a);
+            }
             else
             {
                 bodyRenderer.color = baseColor;
@@ -111,11 +133,34 @@ public class PlayerVisuals : MonoBehaviour
         Effects.Burst(feet, dustColor, Mathf.RoundToInt(4 + 8 * amount), 2f + 3f * amount, 0.1f, 0.8f);
     }
 
+    // Stretch tall on takeoff and kick up a little dust.
+    private void OnJumped()
+    {
+        squash = new Vector3(0.8f, 1.2f, 1f);
+        Vector2 feet = (Vector2)transform.position + Vector2.down * 1f;
+        Effects.Burst(feet, dustColor, 5, 2f, 0.08f, 0.5f);
+    }
+
     // A quick stretch when the rope catches, plus sparks at the anchor.
     private void OnAttached(Vector2 anchor)
     {
         squash = new Vector3(0.85f, 1.15f, 1f);
         Effects.Burst(anchor, sparkColor, 8, 3f, 0.08f);
+    }
+
+    // A small puff of rope-colored bits where the rope got cut.
+    private void OnRopeBroken(Vector2 point)
+    {
+        Effects.Burst(point, new Color(1f, 0.85f, 0.6f), 10, 3f, 0.08f);
+    }
+
+    // Burst apart and hide the sprite when the player runs out of hearts.
+    private void OnDied()
+    {
+        Effects.Burst(transform.position, hitColor, 30, 7f, 0.15f, 0.4f);
+        Effects.Burst(transform.position, Color.white, 12, 5f, 0.1f, 0.4f);
+        if (CameraFollow.Instance != null) CameraFollow.Instance.Shake(0.5f, 0.4f);
+        if (bodyRenderer != null) bodyRenderer.enabled = false;
     }
 
     // Flash red, squash, throw out red particles, and shake the camera.

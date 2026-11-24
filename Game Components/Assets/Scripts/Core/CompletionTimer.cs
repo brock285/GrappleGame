@@ -4,7 +4,8 @@ using UnityEngine;
 /// Keeps track of how long the current run has taken (UC10, UC11). It counts
 /// with Unity's scaled time, and pausing sets the time scale to 0, so the
 /// timer stops on its own while the game is paused and picks back up on
-/// resume (UC7, UC8). GameManager starts it and stops it.
+/// resume (UC7, UC8). GameManager starts it the first time the player moves
+/// and stops it at the finish.
 /// </summary>
 public class CompletionTimer : MonoBehaviour
 {

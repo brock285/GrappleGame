@@ -34,12 +34,34 @@ public static class UIBuilder
     // The controls screen text, shown on both the main menu and the pause menu (UC2).
     private const string ControlsText =
         "Move: A / D or Left / Right arrows\n" +
+        "Jump: Space\n" +
         "Fire grappling hook: hold left mouse button\n" +
         "Let go: release left mouse button\n" +
         "Swing: A / D while hooked\n" +
-        "Reel in: hold W or Space\n" +
+        "Reel in: hold W\n" +
+        "Let out rope: hold S\n" +
+        "Pause: Esc\n\n" +
+        "Spikes cost a heart. Lose all 3 and you start over.\n" +
+        "Walls and moving platforms cut your rope. You can hang for 5 seconds.";
+
+    // The two columns on the "How to play" screen before the climb.
+    private const string IntroControlsText =
+        "Move: A / D or arrow keys\n" +
+        "Jump: Space\n" +
+        "Fire the hook: hold left mouse button\n" +
+        "Let go: release left mouse button\n" +
+        "Swing: A / D while hooked\n" +
+        "Reel in: hold W\n" +
         "Let out rope: hold S\n" +
         "Pause: Esc";
+
+    private const string IntroRulesText =
+        "Climb to the top of the tower as fast as you can. The timer starts the first time you move.\n\n" +
+        "Aim with the crosshair. It turns orange when the hook can reach a grapple point.\n\n" +
+        "You can hang for 5 seconds. The rope turns red, then gives out.\n\n" +
+        "Red spikes cost a heart. Lose all 3 and you start over from the bottom.\n\n" +
+        "Orange spikes pop up on a timer, and ice is slippery.\n\n" +
+        "Walls, ledges, and moving platforms cut your rope.";
 
     // Game scene UI
 
@@ -71,6 +93,51 @@ public static class UIBuilder
         TimerDisplay timerDisplay = timerLabel.gameObject.AddComponent<TimerDisplay>();
         SetRef(timerDisplay, "timer", timer);
         SetRef(timerDisplay, "label", timerLabel);
+
+        // The hearts in the top left corner, one image per heart.
+        PlayerHealth playerHealth = Object.FindAnyObjectByType<PlayerHealth>();
+        int heartCount = playerHealth != null ? playerHealth.MaxHealth : 3;
+        var heartImages = new Image[heartCount];
+        for (int i = 0; i < heartCount; i++)
+        {
+            var heartObject = new GameObject($"Heart {i + 1}", typeof(RectTransform));
+            var heartRect = (RectTransform)heartObject.transform;
+            heartRect.SetParent(root, false);
+            heartRect.anchorMin = heartRect.anchorMax = new Vector2(0f, 1f); // Pinned to the top left
+            heartRect.sizeDelta = new Vector2(66, 60);
+            heartRect.anchoredPosition = new Vector2(60 + i * 76, -55);
+            var heartImage = heartObject.AddComponent<Image>();
+            heartImage.sprite = ArtGenerator.Heart;
+            heartImage.preserveAspect = true;
+            heartImage.raycastTarget = false;
+            heartImages[i] = heartImage;
+        }
+
+        TMP_Text outOfHealth = MakeLabel(root, "Out Of Health Text", "Out of health", 72, new Vector2(0, 120), new Vector2(1000, 120));
+        outOfHealth.color = new Color(0.95f, 0.3f, 0.3f);
+        HealthDisplay healthDisplay = canvas.gameObject.AddComponent<HealthDisplay>();
+        var healthSo = new SerializedObject(healthDisplay);
+        SerializedProperty heartsProperty = healthSo.FindProperty("hearts");
+        heartsProperty.arraySize = heartImages.Length;
+        for (int i = 0; i < heartImages.Length; i++) heartsProperty.GetArrayElementAtIndex(i).objectReferenceValue = heartImages[i];
+        healthSo.FindProperty("outOfHealthText").objectReferenceValue = outOfHealth;
+        healthSo.ApplyModifiedPropertiesWithoutUndo();
+
+        // The "How to play" screen that shows before the climb.
+        IntroScreen intro = canvas.gameObject.AddComponent<IntroScreen>();
+        RectTransform introPanel = MakePanel(root, "Intro Panel");
+        introPanel.GetComponent<Image>().color = new Color(0.04f, 0.05f, 0.1f, 0.94f); // Darker than the other panels so the text is easy to read over the level.
+        MakeLabel(introPanel, "Title", "How to play", 80, new Vector2(0, 400), new Vector2(1000, 120));
+        MakeLabel(introPanel, "Controls Heading", "Controls", 48, new Vector2(-470, 270), new Vector2(820, 70)).color = AccentColor;
+        TMP_Text introControls = MakeLabel(introPanel, "Controls Text", IntroControlsText, 36, new Vector2(-470, 0), new Vector2(820, 460));
+        introControls.alignment = TextAlignmentOptions.Top;
+        MakeLabel(introPanel, "Rules Heading", "The climb", 48, new Vector2(470, 270), new Vector2(820, 70)).color = AccentColor;
+        TMP_Text introRules = MakeLabel(introPanel, "Rules Text", IntroRulesText, 29, new Vector2(470, -20), new Vector2(820, 520));
+        introRules.alignment = TextAlignmentOptions.Top;
+        MakeButton(introPanel, "Start Button", "Start climbing", new Vector2(0, -340), intro.StartClimbing);
+        MakeLabel(introPanel, "Enter Hint", "or press Enter", 30, new Vector2(0, -430), new Vector2(600, 50));
+        SetRef(intro, "panel", introPanel.gameObject);
+        SetRef(manager, "introScreen", intro);
 
         PauseMenu pauseMenu = canvas.gameObject.AddComponent<PauseMenu>();
         VictoryScreen victory = canvas.gameObject.AddComponent<VictoryScreen>();
@@ -106,6 +173,8 @@ public static class UIBuilder
         pausePanel.gameObject.SetActive(false);
         controlsPanel.gameObject.SetActive(false);
         victoryPanel.gameObject.SetActive(false);
+        outOfHealth.gameObject.SetActive(false);
+        introPanel.gameObject.SetActive(false);
 
         EditorSceneManager.MarkSceneDirty(canvas.gameObject.scene);
         Selection.activeGameObject = canvas.gameObject;
@@ -212,7 +281,7 @@ public static class UIBuilder
     {
         RectTransform panel = MakePanel(parent, "Controls Panel");
         MakeLabel(panel, "Title", "Controls", 72, new Vector2(0, 330), new Vector2(800, 120));
-        TMP_Text body = MakeLabel(panel, "Controls Text", ControlsText, 38, new Vector2(0, 30), new Vector2(1100, 460));
+        TMP_Text body = MakeLabel(panel, "Controls Text", ControlsText, 34, new Vector2(0, 20), new Vector2(1100, 520));
         body.alignment = TextAlignmentOptions.Top;
         MakeButton(panel, "Back Button", "Back", new Vector2(0, -330), onBack);
         return panel;

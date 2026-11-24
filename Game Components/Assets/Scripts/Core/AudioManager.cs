@@ -23,7 +23,7 @@ public class AudioManager : MonoBehaviour
     /// The sound effects the game can play. The order has to match the file
     /// names list in Awake.
     /// </summary>
-    public enum Sfx { GrappleAttach, GrappleRelease, Land, Hit, Click, Finish, NewBest }
+    public enum Sfx { GrappleAttach, GrappleRelease, Land, Hit, Click, Finish, NewBest, RopeSnap, GameOver, Jump }
 
     // Music plays a little quieter than the effects so it doesn't drown them out.
     private const float MusicBaseVolume = 0.55f;
@@ -81,7 +81,7 @@ public class AudioManager : MonoBehaviour
         sfxSource.playOnAwake = false;
 
         // These names are in the same order as the Sfx enum.
-        string[] names = { "grapple_attach", "grapple_release", "land", "hit", "click", "finish", "new_best" };
+        string[] names = { "grapple_attach", "grapple_release", "land", "hit", "click", "finish", "new_best", "rope_snap", "game_over", "jump" };
         clips = new AudioClip[names.Length];
         for (int i = 0; i < names.Length; i++)
         {
@@ -129,7 +129,11 @@ public class AudioManager : MonoBehaviour
 
     private void PlayOneShot(Sfx sfx, float volume)
     {
-        AudioClip clip = clips[(int)sfx];
+        // Guards against a sound that has no file loaded, for example if
+        // Unity reloads the scripts while the game is running.
+        int index = (int)sfx;
+        if (clips == null || index >= clips.Length) return;
+        AudioClip clip = clips[index];
         if (clip == null) return;
         sfxSource.PlayOneShot(clip, Mathf.Clamp01(volume) * GameSettings.SfxVolume);
     }
@@ -146,11 +150,13 @@ public class AudioManager : MonoBehaviour
         {
             player.Landed += OnLanded;
             player.Hit += OnHit;
+            player.Jumped += OnJumped;
         }
         if (grapple != null)
         {
             grapple.Attached += OnAttached;
             grapple.Detached += OnDetached;
+            grapple.RopeBroken += OnRopeBroken;
         }
 
         // Every button clicks, including ones on hidden panels, so the menus
@@ -165,11 +171,13 @@ public class AudioManager : MonoBehaviour
         {
             player.Landed -= OnLanded;
             player.Hit -= OnHit;
+            player.Jumped -= OnJumped;
         }
         if (grapple != null)
         {
             grapple.Attached -= OnAttached;
             grapple.Detached -= OnDetached;
+            grapple.RopeBroken -= OnRopeBroken;
         }
         player = null;
         grapple = null;
@@ -178,7 +186,9 @@ public class AudioManager : MonoBehaviour
     // Harder landings are louder. A small hop plays at about a third of full volume.
     private void OnLanded(float fallSpeed) => PlayOneShot(Sfx.Land, Mathf.Lerp(0.35f, 1f, fallSpeed / HardLandingSpeed));
     private void OnHit(Vector2 direction) => PlayOneShot(Sfx.Hit, 1f);
+    private void OnJumped() => PlayOneShot(Sfx.Jump, 0.6f);
     private void OnAttached(Vector2 point) => PlayOneShot(Sfx.GrappleAttach, 0.8f);
     private void OnDetached() => PlayOneShot(Sfx.GrappleRelease, 0.6f);
+    private void OnRopeBroken(Vector2 point) => PlayOneShot(Sfx.RopeSnap, 1f);
     private void OnButtonClick() => PlayOneShot(Sfx.Click, 0.7f);
 }

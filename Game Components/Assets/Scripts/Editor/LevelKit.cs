@@ -178,6 +178,7 @@ public static class LevelKit
     {
         DestroyIfExists("Background");
         DestroyIfExists("Aim Marker");
+        DestroyIfExists("Crosshair");
 
         GameObject player = GameObject.Find("Player");
         if (player == null)
@@ -221,6 +222,15 @@ public static class LevelKit
         aimRenderer.sortingOrder = 40;
         aimRenderer.enabled = false;
         SetRef(aim.AddComponent<AimIndicator>(), "grapple", player.GetComponent<GrapplingHook>());
+
+        // The crosshair that takes the mouse pointer's place during play.
+        var crosshair = new GameObject("Crosshair");
+        Undo.RegisterCreatedObjectUndo(crosshair, "Build Level");
+        var crosshairRenderer = crosshair.AddComponent<SpriteRenderer>();
+        crosshairRenderer.sprite = ArtGenerator.Crosshair;
+        crosshairRenderer.sortingOrder = 60; // In front of everything in the level.
+        crosshairRenderer.enabled = false;
+        SetRef(crosshair.AddComponent<Crosshair>(), "grapple", player.GetComponent<GrapplingHook>());
 
         // The camera follows the player.
         Camera cam = Camera.main;
@@ -269,6 +279,9 @@ public static class LevelKit
         sr.drawMode = SpriteDrawMode.Simple;
         sr.color = Color.white;
         sr.sortingOrder = 10;
+
+        // Players built before health was added get it here.
+        if (player.GetComponent<PlayerHealth>() == null) Undo.AddComponent<PlayerHealth>(player);
 
         var visuals = player.GetComponent<PlayerVisuals>();
         if (visuals == null) visuals = Undo.AddComponent<PlayerVisuals>(player);
